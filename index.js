@@ -8,7 +8,7 @@ const ITEMS_NOSTRUM = [152898, 184659, 201005], // EU, NA, RU
 const sysmsg = require('tera-data-parser').sysmsg
 
 module.exports = function TrueEverfulNostrum(dispatch) {
-	let cid = null,
+	let gameId = null,
 		slot = -1,
 		timeout = null,
 		cooldown = 0,
@@ -19,8 +19,8 @@ module.exports = function TrueEverfulNostrum(dispatch) {
 		inContract = false,
 		inBG = false
 
-	dispatch.hook('S_LOGIN', 1, event => {
-		({cid} = event)
+	dispatch.hook('S_LOGIN', 9, event => {
+		({gameId} = event)
 		nextUse = 0
 	})
 
@@ -29,7 +29,7 @@ module.exports = function TrueEverfulNostrum(dispatch) {
 	if(HIDE_MESSAGE)
 		dispatch.hook('S_SYSTEM_MESSAGE', 1, event => {
 			let msg = event.message.split('\x0b'),
-				type = msg[0].startsWith('@') ? sysmsg.maps.get(dispatch.base.protocolVersion).code.get(msg[0].slice(1)) : ''
+				type = msg[0].startsWith('@') ? sysmsg.maps.get(dispatch.base.protocolVersion).code.get(Number(msg[0].slice(1))) : ''
 
 			if(type == 'SMT_ITEM_USED' || type == 'SMT_CANT_USE_ITEM_COOLTIME') {
 				let obj = {}
@@ -68,7 +68,7 @@ module.exports = function TrueEverfulNostrum(dispatch) {
 	})
 	dispatch.hook('S_SPAWN_ME', 1, event => { nostrum(!(alive = event.alive)) })
 	dispatch.hook('S_CREATURE_LIFE', 1, event => {
-		if(event.target.equals(cid) && alive != event.alive) {
+		if(event.target.equals(gameId) && alive != event.alive) {
 			nostrum(!(alive = event.alive))
 
 			if(!alive) {
@@ -87,7 +87,7 @@ module.exports = function TrueEverfulNostrum(dispatch) {
 	dispatch.hook('S_CANCEL_CONTRACT', 1, contract.bind(null, false))
 
 	function abnormality(type, event) {
-		if(event.target.equals(cid) && (event.id == BUFF_NOSTRUM_TD || event.id == BUFF_NOSTRUM_H)) {
+		if(event.target.equals(gameId) && (event.id == BUFF_NOSTRUM_TD || event.id == BUFF_NOSTRUM_H)) {
 			nextUse = type == 'S_ABNORMALITY_END' ? 0 : Date.now() + Math.floor(event.duration / 2)
 			nostrum()
 
@@ -102,7 +102,7 @@ module.exports = function TrueEverfulNostrum(dispatch) {
 	}
 
 	function mount(enter, event) {
-		if(event.target.equals(cid)) nostrum(mounted = enter)
+		if(event.target.equals(gameId)) nostrum(mounted = enter)
 	}
 
 	function contract(enter) {
